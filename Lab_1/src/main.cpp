@@ -40,7 +40,10 @@ int main (int argc, char *argv[]) {
                 break;
             }
             case 3: {
-                parallel::ThreadManager::EstimateThreads(false);
+                bool param;
+                std::cout << "Enter logging: ";
+                std::cin >> param;
+                parallel::ThreadManager::EstimateThreads (param);
                 break;
             }
             case 4: {

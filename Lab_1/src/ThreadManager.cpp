@@ -70,6 +70,7 @@ void ThreadManager::EstimateThreads (bool aLogging)
     // Подбор минимального количества операций
     long long anOptimalOperations = 0;
     for (size_t i = 0; i < 3; ++i) {
+        anOperations = 0;
         while (true) {
             pthread_create (&aThread, nullptr, ThreadFunctions::ThreadJobOperations, &anOperations);
             aStart = std::chrono::high_resolution_clock::now();
@@ -89,7 +90,7 @@ void ThreadManager::EstimateThreads (bool aLogging)
                 break;
             }
 
-            anOperations += 1000;
+            anOperations += 10000;
         }
     }
     std::cout << "\nFinal optimal operations: " << anOptimalOperations / 3 << std::endl;
