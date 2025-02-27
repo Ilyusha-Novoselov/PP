@@ -9,6 +9,16 @@
 
 namespace parallel {
 
+namespace {
+void Func (int& theValue, size_t theNumOfOperations) 
+{
+    for (size_t i = 0; i < theNumOfOperations; ++i) {
+        theValue += i;
+    }
+}
+
+}
+
 void ThreadManager::StartOneThread() 
 {
     pthread_t aThread;
@@ -100,7 +110,7 @@ void ThreadManager::StartThreadsWithAttr()
     size_t aStackSize = 2 * 1024 * 1024; // 2 MB стек
     pthread_attr_setstacksize (&anAttr.first, aStackSize);
 
-#if 0
+#ifdef __unix__
     size_t aGuardSize = 4096; // 4 KB охранная зона
     pthread_attr_setguardsize (&anAttr.first, aGuardSize);
 
@@ -137,8 +147,8 @@ void ThreadManager::StartThreadWithParams()
     pthread_t aThread;
 
     ThreadParams aParams;
-    aParams.myParamFirst = 1;
-    aParams.myParamSecond = 2.5;
+    aParams.myID = 1;
+    aParams.myCreationTime = std::chrono::system_clock::to_time_t (std::chrono::system_clock::now());
 
     int anErr = pthread_create (&aThread, nullptr, ThreadFunctions::ThreadJobWithParams, &aParams);
 
@@ -150,4 +160,88 @@ void ThreadManager::StartThreadWithParams()
     pthread_join (aThread, nullptr);
 }
 
+void ThreadManager::StartThreadWithAttrOut()
+{
+    pthread_t aThread;
+    int anErr = pthread_create (&aThread, nullptr, ThreadFunctions::ThreadAttrPrint, nullptr);
+
+    if (anErr != 0) {
+        std::cout << "Cannot create a thread: " << strerror (anErr) << std::endl;
+        exit (-1);
+    }
+
+    pthread_join (aThread, nullptr);
+}
+
+void ThreadManager::ParallelArrayProcessing (size_t theNum, size_t theArraySize, size_t theNumOfOperations, bool aLogging)
+{
+    std::vector <int> anArrayParallel (theArraySize);
+    for (size_t i = 0; i < theArraySize; ++i) {
+        anArrayParallel[i] = rand() % 10;
+    }
+    std::vector <int> anArrayNotParallel (anArrayParallel);
+
+    if (aLogging) {
+        std::cout << "Source array: ";
+        for (int aNum : anArrayParallel) {
+            std::cout << aNum << " ";
+        }
+        std::cout << std::endl;
+    }
+    
+
+    std::vector <pthread_t> aThreads (theNum);
+    std::vector <ThreadData> aThreadsData (theNum);
+
+    size_t aChunkSize = (theArraySize + theNum - 1) / theNum;
+
+    int anErr;
+
+    std::cout << "Processing " << theArraySize << " using " << theNum << " threads." << std::endl;
+
+    for (size_t i = 0; i < theNum; ++i) {
+        aThreadsData[i].myArray = anArrayParallel.data();
+        aThreadsData[i].myStart = i * aChunkSize;
+        aThreadsData[i].myEnd = (i == theNum - 1) ? theArraySize : (i + 1) * aChunkSize;
+        aThreadsData[i].myNumOfOperations = theNumOfOperations;
+        aThreadsData[i].myFunc = Func;
+        anErr = pthread_create (&aThreads[i], nullptr, ThreadFunctions::ThreadJobProcessArray, &aThreadsData[i]);
+        if (anErr != 0) {
+            std::cerr << "Error creating thread: " << strerror(anErr) << std::endl;
+            exit(-1);
+        }
+    }
+    auto aStart = std::chrono::steady_clock::now();
+    for (auto& aThread : aThreads) {
+        pthread_join (aThread, nullptr);
+    }
+    auto anEnd = std::chrono::steady_clock::now();
+    auto anParallelTime = std::chrono::duration <double> (anEnd - aStart).count();
+
+    if (aLogging) {
+        std::cout << "Final parallel array: ";
+        for (int aNum : anArrayParallel) {
+            std::cout << aNum << " ";
+        }
+    }
+    
+
+    aStart = std::chrono::steady_clock::now();
+    for (int& aNum : anArrayNotParallel) {
+        Func (aNum, theNumOfOperations);
+    }
+    anEnd = std::chrono::steady_clock::now();
+    auto anNotParallelTime = std::chrono::duration <double> (anEnd - aStart).count();
+
+    if (aLogging) {
+        std::cout << "\nFinal not parallel array: ";
+        for (int aNum : anArrayNotParallel) {
+            std::cout << aNum << " ";
+        }
+    }
+
+    std::cout << "\nParallel time: " << anParallelTime << "\nNot parallel time: " << anNotParallelTime << std::endl;
+    std::cout << "Speedup: " << anNotParallelTime / anParallelTime << std::endl;
+    std::cout << "Efficiency: " << (anNotParallelTime / anParallelTime) / theNum << std::endl;
+}
 }

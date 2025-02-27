@@ -13,7 +13,7 @@ public:
     // «апуск n потоков
     static void StartNThreads (size_t N);
 
-    // ќценка стоимости запуска потоков с операцией
+    // ќценка стоимости запуска потока с операцией
     static void EstimateThreads (bool aLogging);
 
     // «апуск потоков с разными атрибутами
@@ -21,6 +21,11 @@ public:
 
     // «апуск потока со набором параметров
     static void StartThreadWithParams();
+
+    // «апуск потока с отображением атрибутов
+    static void StartThreadWithAttrOut();
+
+    static void ParallelArrayProcessing (size_t theNum, size_t theArraySize, size_t theNumOfOperations, bool aLogging);
 };
 
 }

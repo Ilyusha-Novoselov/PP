@@ -4,8 +4,16 @@
 namespace parallel {
 
 struct ThreadParams {
-    int myParamFirst;
-    double myParamSecond;
+    int myID;
+    time_t myCreationTime;
+};
+
+struct alignas(64) ThreadData {
+    int* myArray;
+    size_t myStart;
+    size_t myEnd;
+    size_t myNumOfOperations;
+    void (*myFunc)(int&, size_t);
 };
 
 class ThreadFunctions {
@@ -17,6 +25,10 @@ public:
     static void *ThreadJobOperations (void* theOps);
 
     static void *ThreadJobWithParams (void* theParams);
+
+    static void *ThreadAttrPrint (void* theArgs);
+
+    static void *ThreadJobProcessArray (void* theArgs);
 };
 
 }
