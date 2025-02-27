@@ -46,12 +46,11 @@ void *ThreadFunctions::ThreadAttrPrint (void* theArgs)
     size_t aGuard = 0;
     size_t aStackSize = 0;
 
-    pthread_attr_t aThreadAttr;
-
 #ifdef __unix__
+    pthread_attr_t aThreadAttr;
+    pthread_getattr_np (pthread_self(), &aThreadAttr);
     pthread_attr_getstacksize (&aThreadAttr, &aStackSize);
     pthread_attr_getdetachstate (&aThreadAttr, &aDetach);
-    pthread_getattr_np (pthread_self(), &aThreadAttr);
     pthread_attr_getguardsize (&aThreadAttr, &aGuard);
 #endif
 
