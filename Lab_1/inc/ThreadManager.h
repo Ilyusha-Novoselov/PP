@@ -1,6 +1,8 @@
 #ifndef _ThreadManager_HeaderFile
 #define _ThreadManager_HeaderFile
 
+#include <cstddef>
+
 namespace parallel {
 
 class ThreadManager {
