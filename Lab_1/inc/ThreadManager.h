@@ -1,0 +1,28 @@
+#ifndef _ThreadManager_HeaderFile
+#define _ThreadManager_HeaderFile
+
+namespace parallel {
+
+class ThreadManager {
+public:
+    ThreadManager() = default;
+
+    // Запуск одного потока
+    static void StartOneThread();
+
+    // Запуск n потоков
+    static void StartNThreads (size_t N);
+
+    // Оценка стоимости запуска потоков с операцией
+    static void EstimateThreads (bool aLogging);
+
+    // Запуск потоков с разными атрибутами
+    static void StartThreadsWithAttr();
+
+    // Запуск потока со набором параметров
+    static void StartThreadWithParams();
+};
+
+}
+
+#endif
