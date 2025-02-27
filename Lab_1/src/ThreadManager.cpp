@@ -25,7 +25,7 @@ void ThreadManager::StartOneThread()
     int anErr = pthread_create (&aThread, nullptr, ThreadFunctions::ThreadJobSimple, nullptr);
 
     if (anErr != 0) {
-        std::cout << "Cannot create a thread: " << strerror (anErr) << std::endl;
+        std::cout << "Cannot create a thread: " << std::endl;
         exit (-1);
     }
 
@@ -42,7 +42,7 @@ void ThreadManager::StartNThreads (size_t N)
         int anErr = pthread_create (&aThread, nullptr, ThreadFunctions::ThreadJobSimple, nullptr);
 
         if (anErr != 0) {
-            std::cout << "Cannot create a thread: " << strerror (anErr) << std::endl;
+            std::cout << "Cannot create a thread: " << std::endl;
             exit (-1);
         }
     }
@@ -124,13 +124,13 @@ void ThreadManager::StartThreadsWithAttr()
 
     anErr = pthread_create (&aThreads.first, &anAttr.first, ThreadFunctions::ThreadJobSimple, nullptr);
     if (anErr != 0) {
-        std::cout << "Cannot create Thread1: " << strerror (anErr) << std::endl;
+        std::cout << "Cannot create Thread1: " << std::endl;
         exit(-1);
     }
 
     anErr = pthread_create (&aThreads.second, &anAttr.second, ThreadFunctions::ThreadJobSimple, nullptr);
     if (anErr != 0) {
-        std::cout << "Cannot create Thread2: " << strerror (anErr) << std::endl;
+        std::cout << "Cannot create Thread2: " << std::endl;
         exit(-1);
     }
 
@@ -153,7 +153,7 @@ void ThreadManager::StartThreadWithParams()
     int anErr = pthread_create (&aThread, nullptr, ThreadFunctions::ThreadJobWithParams, &aParams);
 
     if (anErr != 0) {
-        std::cout << "Cannot create a thread: " << strerror (anErr) << std::endl;
+        std::cout << "Cannot create a thread: " << std::endl;
         exit (-1);
     }
 
@@ -166,7 +166,7 @@ void ThreadManager::StartThreadWithAttrOut()
     int anErr = pthread_create (&aThread, nullptr, ThreadFunctions::ThreadAttrPrint, nullptr);
 
     if (anErr != 0) {
-        std::cout << "Cannot create a thread: " << strerror (anErr) << std::endl;
+        std::cout << "Cannot create a thread: " << std::endl;
         exit (-1);
     }
 
@@ -207,7 +207,7 @@ void ThreadManager::ParallelArrayProcessing (size_t theNum, size_t theArraySize,
         aThreadsData[i].myFunc = Func;
         anErr = pthread_create (&aThreads[i], nullptr, ThreadFunctions::ThreadJobProcessArray, &aThreadsData[i]);
         if (anErr != 0) {
-            std::cerr << "Error creating thread: " << strerror(anErr) << std::endl;
+            std::cerr << "Error creating thread: " << std::endl;
             exit(-1);
         }
     }
