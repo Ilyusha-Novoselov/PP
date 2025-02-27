@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
-#include <memory>
 
 #include <pthread.h>
 
@@ -115,7 +114,7 @@ void ThreadManager::StartThreadsWithAttr()
     size_t aGuardSize = 4096; // 4 KB охранная зона
     pthread_attr_setguardsize (&anAttr.first, aGuardSize);
 
-    std::unique_ptr <void> aStackMemory = std::make_unique <void> (aStackSize);
+    void* aStackMemory = malloc (aStackSize);
     if (aStackMemory == nullptr) {
         std::cout << "Memory allocation for stack failed!" << std::endl;
         exit(-1);
@@ -139,7 +138,9 @@ void ThreadManager::StartThreadsWithAttr()
 
     pthread_attr_destroy (&anAttr.first);
     pthread_attr_destroy (&anAttr.second);
-
+#ifdef __unix__
+    free (aStackMemory);
+#endif
     std::cout << "Main thread finished execution" << std::endl;
 }
 
