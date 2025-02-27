@@ -14,7 +14,7 @@ int main (int argc, char *argv[]) {
 
     //parallel::ThreadManager::StartThreadWithAttrOut();
 
-    //parallel::ThreadManager::ParallelArrayProcessing (16, 100000, 100000, false);
+    parallel::ThreadManager::ParallelArrayProcessing (16, 100000, 100000, false);
 
     return 0;
 }

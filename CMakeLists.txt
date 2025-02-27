@@ -6,8 +6,10 @@ project(Labs)
 # Указываем, что мы собираем только для x64 архитектуры
 set(CMAKE_GENERATOR_PLATFORM "x64")
 
-# Включаем CMakeLists.txt из папки 3rdparty/pthreads
-add_subdirectory(3rdparty)
+if(WIN32)
+	# Включаем CMakeLists.txt из папки 3rdparty/pthreads
+	add_subdirectory(3rdparty)
+endif()
 
 # Определяем список лабораторных работ
 set(LABS Lab_1)
