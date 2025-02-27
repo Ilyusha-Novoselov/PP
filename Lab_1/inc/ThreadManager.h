@@ -27,6 +27,7 @@ public:
     // Запуск потока с отображением атрибутов
     static void StartThreadWithAttrOut();
 
+    // Распараллеливание массива
     static void ParallelArrayProcessing (size_t theNum, size_t theArraySize, size_t theNumOfOperations, bool aLogging);
 };
 
