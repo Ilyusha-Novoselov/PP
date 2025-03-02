@@ -1,6 +1,9 @@
 #ifndef _ThreadFunctions_HeaderFile
 #define _ThreadFunctions_HeaderFile
 
+#include <cstddef>
+#include <ctime>
+
 namespace parallel {
 
 struct ThreadParams {
@@ -8,7 +11,7 @@ struct ThreadParams {
     time_t myCreationTime;
 };
 
-struct alignas(64) ThreadData {
+struct ThreadData {
     int* myArray;
     size_t myStart;
     size_t myEnd;

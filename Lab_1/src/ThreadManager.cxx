@@ -4,8 +4,8 @@
 
 #include <pthread.h>
 
-#include "ThreadFunctions.h"
-#include "ThreadManager.h"
+#include "ThreadFunctions.hxx"
+#include "ThreadManager.hxx"
 
 namespace parallel {
 
@@ -67,7 +67,6 @@ void ThreadManager::EstimateThreads (bool aLogging)
     auto aThreadCreationTime = std::chrono::duration <double> (anEnd - aStart).count();
     std::cout << "Thread creation time without operations: " << aThreadCreationTime << " sec" << std::endl;
 
-    // Подбор минимального количества операций
     long long anOptimalOperations = 0;
     for (size_t i = 0; i < 3; ++i) {
         anOperations = 0;
@@ -108,11 +107,11 @@ void ThreadManager::StartThreadsWithAttr()
     pthread_attr_setdetachstate (&anAttr.first, PTHREAD_CREATE_JOINABLE);
     pthread_attr_setdetachstate (&anAttr.second, PTHREAD_CREATE_DETACHED);
 
-    size_t aStackSize = 2 * 1024 * 1024; // 2 MB стек
+    size_t aStackSize = 2 * 1024 * 1024;
     pthread_attr_setstacksize (&anAttr.first, aStackSize);
 
 #ifdef __unix__
-    size_t aGuardSize = 4096; // 4 KB охранная зона
+    size_t aGuardSize = 4096;
     pthread_attr_setguardsize (&anAttr.first, aGuardSize);
 
     void* aStackMemory = malloc (aStackSize);
@@ -176,7 +175,7 @@ void ThreadManager::StartThreadWithAttrOut()
     pthread_join (aThread, nullptr);
 }
 
-void ThreadManager::ParallelArrayProcessing (size_t theNum, size_t theArraySize, size_t theNumOfOperations, bool aLogging)
+void ThreadManager::ParallelArrayProcessing (size_t theNum, size_t theArraySize, size_t theNumOfOperations, Table& theTable, bool aLogging)
 {
     std::vector <int> anArrayParallel (theArraySize);
     for (size_t i = 0; i < theArraySize; ++i) {
@@ -199,8 +198,6 @@ void ThreadManager::ParallelArrayProcessing (size_t theNum, size_t theArraySize,
     size_t aChunkSize = (theArraySize + theNum - 1) / theNum;
 
     int anErr;
-
-    std::cout << "Processing " << theArraySize << " using " << theNum << " threads." << std::endl;
 
     for (size_t i = 0; i < theNum; ++i) {
         aThreadsData[i].myArray = anArrayParallel.data();
@@ -243,8 +240,12 @@ void ThreadManager::ParallelArrayProcessing (size_t theNum, size_t theArraySize,
         }
     }
 
-    std::cout << "\nParallel time: " << anParallelTime << "\nNot parallel time: " << anNotParallelTime << std::endl;
-    std::cout << "Speedup: " << anNotParallelTime / anParallelTime << std::endl;
-    std::cout << "Efficiency: " << (anNotParallelTime / anParallelTime) / theNum << std::endl;
+    theTable.setHeaders({"Threads", "Array Size", "Operations", "Speedup", "Efficiency"});
+
+    theTable.addRow({std::to_string (theNum),
+                     std::to_string (theArraySize),
+                     std::to_string (theNumOfOperations),
+                     std::to_string (anNotParallelTime / anParallelTime),
+                     std::to_string ((anNotParallelTime / anParallelTime) / theNum)});
 }
 }

@@ -20,8 +20,8 @@ get_property(PTHREADS_DLL_DIR DIRECTORY PROPERTY PTHREADS_DLL_DIR)
 endif()
 
 # Указываем пути к исходным и заголовочным файлам текущей лабораторной работы
-file(GLOB SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-file(GLOB INC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/inc/*.h")
+file(GLOB SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cxx")
+file(GLOB INC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/inc/*.hxx")
 set(INC_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/inc")
 
 if(WIN32)

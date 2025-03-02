@@ -1,6 +1,23 @@
 #include <iostream>
-#include "ThreadManager.h"
 #include <cstdlib>
+#include <thread>
+
+#include "ThreadManager.hxx"
+
+namespace {
+void ParallelArrayProcessingTest()
+{
+    Table aTable;
+    for (size_t aThreads = 2; aThreads <= 8; aThreads *= 2) {
+        for (size_t anArraySize = 100; anArraySize <= 100000; anArraySize  *= 10) {
+            for (size_t anOp = 100; anOp <= 100000; anOp *= 10) {
+                parallel::ThreadManager::ParallelArrayProcessing (aThreads, anArraySize, anOp, aTable, false);
+            }
+        }
+    }
+
+    aTable.Print();
+}
 
 void clearScreen() {
     #ifdef __unix__
@@ -10,8 +27,10 @@ void clearScreen() {
     #endif
 }
 
+}
+
 int main (int argc, char *argv[]) {
-    int choice;
+    int aChoice;
 
     while (true) {
         clearScreen();
@@ -25,25 +44,25 @@ int main (int argc, char *argv[]) {
         std::cout << "7. Parallel Array Processing\n";
         std::cout << "0. Exit\n";
         std::cout << "Enter your choice: ";
-        std::cin >> choice;
+        std::cin >> aChoice;
 
-        switch(choice) {
+        switch(aChoice) {
             case 1: {
                 parallel::ThreadManager::StartOneThread();
                 break;
             }
             case 2: {
-                int numThreads;
+                int aNumThreads;
                 std::cout << "Enter the number of threads: ";
-                std::cin >> numThreads;
-                parallel::ThreadManager::StartNThreads(numThreads);
+                std::cin >> aNumThreads;
+                parallel::ThreadManager::StartNThreads (aNumThreads);
                 break;
             }
             case 3: {
-                bool param;
+                bool aParam;
                 std::cout << "Enter logging: ";
-                std::cin >> param;
-                parallel::ThreadManager::EstimateThreads (param);
+                std::cin >> aParam;
+                parallel::ThreadManager::EstimateThreads (aParam);
                 break;
             }
             case 4: {
@@ -59,15 +78,7 @@ int main (int argc, char *argv[]) {
                 break;
             }
             case 7: {
-                int param1, param2, param3;
-                bool param4;
-                std::cout << "Enter the number of threads: ";
-                std::cin >> param1;
-                std::cout << "Enter the size of the arrays: ";
-                std::cin >> param2;
-                std::cout << "Enter the number of operations applicable to the array element: ";
-                std::cin >> param3;
-                parallel::ThreadManager::ParallelArrayProcessing(param1, param2, param3, false);
+                ParallelArrayProcessingTest();
                 break;
             }
             case 0: {
