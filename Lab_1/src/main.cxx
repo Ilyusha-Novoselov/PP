@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "ThreadManager.hxx"
+#include "WebServers.hxx"
 
 namespace {
 void ParallelArrayProcessingTest()
@@ -42,6 +43,10 @@ int main (int argc, char *argv[]) {
         std::cout << "5. Start Thread With Params\n";
         std::cout << "6. Start Thread With AttrOut\n";
         std::cout << "7. Parallel Array Processing\n";
+        std::cout << "8. One Thread Server\n";
+        std::cout << "9. One Thread Server With Php\n";
+        std::cout << "10. MultiThread Server\n";
+        std::cout << "11. MultiThread Server With Php\n";
         std::cout << "0. Exit\n";
         std::cout << "Enter your choice: ";
         std::cin >> aChoice;
@@ -79,6 +84,22 @@ int main (int argc, char *argv[]) {
             }
             case 7: {
                 ParallelArrayProcessingTest();
+                break;
+            }
+            case 8: {
+                parallel::WebServers::OneThreadServer();
+                break;
+            }
+            case 9: {
+                parallel::WebServers::OneThreadServerWithPhp();
+                break;
+            }
+            case 10: {
+                parallel::WebServers::MultiThreadServer();
+                break;
+            }
+            case 11: {
+                parallel::WebServers::MultiThreadServerWithPhp();
                 break;
             }
             case 0: {
