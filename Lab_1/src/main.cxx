@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <thread>
+#include <array>
 
 #include "ThreadManager.hxx"
 #include "WebServers.hxx"
@@ -8,9 +9,10 @@
 namespace {
 void ParallelArrayProcessingTest()
 {
+    std::array <size_t, 6> anArraySizes = {50, 100, 500, 1000, 5000, 10000};
     Table aTable;
-    for (size_t aThreads = 2; aThreads <= 8; aThreads *= 2) {
-        for (size_t anArraySize = 100; anArraySize <= 100000; anArraySize  *= 10) {
+    for (size_t aThreads = 1; aThreads <= 8; aThreads *= 2) {
+        for (size_t anArraySize : anArraySizes) {
             for (size_t anOp = 100; anOp <= 100000; anOp *= 10) {
                 parallel::ThreadManager::ParallelArrayProcessing (aThreads, anArraySize, anOp, aTable, false);
             }
