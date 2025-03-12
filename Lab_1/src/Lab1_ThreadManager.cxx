@@ -4,8 +4,8 @@
 
 #include <pthread.h>
 
-#include "ThreadFunctions.hxx"
-#include "ThreadManager.hxx"
+#include "Lab1_ThreadFunctions.hxx"
+#include "Lab1_ThreadManager.hxx"
 
 namespace parallel {
 

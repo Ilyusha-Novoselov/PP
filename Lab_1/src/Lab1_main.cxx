@@ -3,8 +3,8 @@
 #include <thread>
 #include <array>
 
-#include "ThreadManager.hxx"
-#include "WebServers.hxx"
+#include "Lab1_ThreadManager.hxx"
+#include "Lab1_WebServers.hxx"
 
 namespace {
 void ParallelArrayProcessingTest()

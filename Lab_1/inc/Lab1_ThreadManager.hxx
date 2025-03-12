@@ -3,7 +3,7 @@
 
 #include <cstddef>
 
-#include "Table.hxx"
+#include "Lab1_Table.hxx"
 
 namespace parallel {
 

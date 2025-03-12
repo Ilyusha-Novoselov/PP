@@ -3,7 +3,7 @@
 
 #include <pthread.h>
 
-#include "ThreadFunctions.hxx"
+#include "Lab1_ThreadFunctions.hxx"
 
 namespace parallel {
 

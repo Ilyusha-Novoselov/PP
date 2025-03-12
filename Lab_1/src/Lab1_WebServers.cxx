@@ -11,7 +11,7 @@
 #include <pthread.h>
 #include <iostream>
 
-#include "WebServers.hxx"
+#include "Lab1_WebServers.hxx"
 
 namespace parallel {
 namespace {

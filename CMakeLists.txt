@@ -8,7 +8,7 @@ if(WIN32)
 	add_subdirectory(3rdparty)
 endif()
 
-set(LABS Lab_1)
+set(LABS Lab_1 Lab_2)
 
 foreach(LAB ${LABS})
     add_subdirectory(${LAB})

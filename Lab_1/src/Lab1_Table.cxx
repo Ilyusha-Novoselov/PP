@@ -1,7 +1,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "Table.hxx"
+#include "Lab1_Table.hxx"
 
 void Table::Print () const 
 {
