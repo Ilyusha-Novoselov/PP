@@ -83,6 +83,7 @@ void MapReduce::TestMapReduce()
     }
 
     aTable.PrintInTerminal();
+    aTable.PrintForWord();
 }
 
 int MapReduce::DoMapReduce (std::vector <int>& myData, 

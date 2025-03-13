@@ -19,6 +19,7 @@ void CompareMutexSpin()
     }
 
     aTable.PrintInTerminal();
+    aTable.PrintForWord();
 }
 
 }

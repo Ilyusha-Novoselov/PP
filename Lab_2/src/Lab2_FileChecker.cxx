@@ -112,6 +112,7 @@ void FileChecker::TestFileChecker()
     }
 
     aTable.PrintInTerminal();
+    aTable.PrintForWord();
 }
 
 }
