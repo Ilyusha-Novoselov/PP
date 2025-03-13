@@ -1,4 +1,5 @@
 #include <array>
+#include <iostream>
 
 #include "Lab2_TaskManager.hxx"
 #include "Lab2_Table.hxx"
@@ -22,7 +23,35 @@ void CompareMutexSpin()
 
 int main()
 {
-    CompareMutexSpin();
+    system("clear");
+    int aChoice;
+
+    std::cout << "1. Print info about thread/task with Mutex\n";
+    std::cout << "2. Print info about thread/task without Mutex\n";
+    std::cout << "3. Compare Mutex/SpinLock\n";
+    std::cout << "4. Simulate Condition Var\n";
+    std::cout << "0. Exit\n";
+    std::cout << "Enter your choice: ";
+    std::cin >> aChoice;
+
+    switch(aChoice) {
+        case 1: {
+            parallel::TaskManager::CheckTheExample (true);
+            break;
+        }
+        case 2: {
+            parallel::TaskManager::CheckTheExample (false);
+            break;
+        }
+        case 3: {
+            CompareMutexSpin();
+            break;
+        }
+        case 4: {
+            parallel::TaskManager::SimulateCondVar();
+            break;
+        }
+    }
 
     return 0;
 }

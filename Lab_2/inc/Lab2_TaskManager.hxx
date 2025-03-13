@@ -19,9 +19,20 @@ public:
 
     static void CheckTheExample (bool theIsEnableMutex);
 
+//----------------------------------------------------------------------------------------//
+
     static void *ThreadJobMutexSpin (void* theArgs);
 
     static void EstimatePrimitiveSynh (size_t theTaskSize, size_t theNumberOfThreads, bool theSpinMutex, Table& theTable);
+
+//----------------------------------------------------------------------------------------//
+
+    static void *Producer (void* theArgs);
+
+    static void *Consumer (void* theArgs);
+
+    static void SimulateCondVar();
+
 };
 
 }
