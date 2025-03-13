@@ -1,7 +1,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "Lab1_Table.hxx"
+#include "Lab2_Table.hxx"
 
 void Table::PrintInTerminal() const 
 {

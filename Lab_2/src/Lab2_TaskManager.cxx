@@ -1,20 +1,31 @@
 #include <iostream>
 #include <cstring>
 #include <random>
+#include <unistd.h>
+#include <chrono>
 #include <pthread.h>
 
 #include "Lab2_TaskManager.hxx"
+#include "Lab2_Table.hxx"
 
 namespace parallel {
 
-pthread_mutex_t   myMutex;
-std::vector <int> myTasks;
-size_t            myCurrentTask;
+pthread_mutex_t    myMutex;
+pthread_spinlock_t mySpinlock;
+std::vector <int>  myTasks;
+size_t             myCurrentTask;
+bool               myIsEnableMutex;
+bool               mySpinMutex;
+int64_t            myLockTime = 0;
+int64_t            myUnlockTime = 0;
+int64_t            myGeneralTime = 0;
 
 namespace {
-void DoTask (size_t theCurrentTask)
+void DoTask (size_t theCurrentTask, bool theIsLogging)
 {
-    std::cout << pthread_self() << " running task " << theCurrentTask << std::endl;
+    if (theIsLogging) {
+        std::cout << pthread_self() << " running task " << theCurrentTask << std::endl;
+    }
     for (int i = 0; i < 10000; i++) {
         myTasks [theCurrentTask]++;
     }
@@ -23,32 +34,42 @@ void DoTask (size_t theCurrentTask)
 
 void *TaskManager::ThreadJob (void* theArgs)
 {
+    int anErr = 0;
     while (true) {
-        int anErr = pthread_mutex_lock (&myMutex);
-        if(anErr != 0) {
-            __ERR_EXIT__ (anErr, "Cannot lock mutex");
+        if (myIsEnableMutex) {
+            anErr = pthread_mutex_lock (&myMutex);
+            if (anErr != 0) {
+                __ERR_EXIT__ (anErr, "Cannot lock mutex");
+            }
         }
 
         size_t aCurrentTask = myCurrentTask;
-        myCurrentTask++;
-        anErr = pthread_mutex_unlock (&myMutex);
-        if(anErr != 0) {
-            __ERR_EXIT__ (anErr, "Cannot unlock mutex");
+        if (!myIsEnableMutex) {
+            sleep (rand() % 3);
         }
+        myCurrentTask++;
+        if (myIsEnableMutex) {
+            anErr = pthread_mutex_unlock (&myMutex);
+            if (anErr != 0) {
+                __ERR_EXIT__ (anErr, "Cannot unlock mutex");
+            }
+        }
+        
 
-        if(aCurrentTask < myTasks.size()) {
-            DoTask (aCurrentTask);
+        if (aCurrentTask < myTasks.size()) {
+            DoTask (aCurrentTask, true);
         } else {
             return nullptr;
         }
     } 
 }
 
-void TaskManager::CheckTheExample() 
+void TaskManager::CheckTheExample (bool theIsEnableMutex) 
 {
     std::random_device rd; 
     std::mt19937 gen(rd()); 
     std::uniform_int_distribution <int> valueDist(1, 100);
+    myIsEnableMutex = theIsEnableMutex;
 
     for (size_t i = 0; i < 10; ++i) {
         myTasks.push_back (valueDist (gen));
@@ -72,6 +93,110 @@ void TaskManager::CheckTheExample()
     pthread_join (aThread1, nullptr);
     pthread_join (aThread2, nullptr);
     pthread_mutex_destroy (&myMutex); 
+}
+
+void *TaskManager::ThreadJobMutexSpin (void* theArgs)
+{
+    int anErr;
+    while (true) {
+        auto aStart = std::chrono::steady_clock::now();
+        if (mySpinMutex) {
+            anErr = pthread_mutex_lock (&myMutex);
+        } else {
+            anErr = pthread_spin_lock (&mySpinlock);
+        }
+        auto anEnd = std::chrono::steady_clock::now();
+        auto aLockTime = std::chrono::duration_cast <std::chrono::nanoseconds> (anEnd - aStart).count();
+
+        myLockTime += aLockTime;
+        if(anErr != 0) {
+            __ERR_EXIT__ (anErr, "Cannot lock");
+        }
+
+        size_t aCurrentTask = myCurrentTask;
+        myCurrentTask++;
+
+        aStart = std::chrono::steady_clock::now();
+        if (mySpinMutex) {
+            anErr = pthread_mutex_unlock (&myMutex);
+        } else {
+            anErr = pthread_spin_unlock (&mySpinlock);
+        }
+        anEnd = std::chrono::steady_clock::now();;
+        auto aUnlockTime = std::chrono::duration_cast <std::chrono::nanoseconds> (anEnd - aStart).count();
+        myUnlockTime += aUnlockTime;
+        if(anErr != 0) {
+            __ERR_EXIT__ (anErr, "Cannot lock");
+        }
+
+        if (aCurrentTask < myTasks.size()) {
+            DoTask (aCurrentTask, false);
+        } else {
+            return nullptr;
+        }
+    }
+
+}
+
+void TaskManager::EstimatePrimitiveSynh (size_t theTaskSize, size_t theNumberOfThreads, bool theSpinMutex, Table& theTable)
+{
+    std::vector <pthread_t> aThreads (theNumberOfThreads);
+    
+    if (myTasks.empty() || myTasks.size() != theTaskSize) {
+        myTasks.clear();
+        std::random_device rd; 
+        std::mt19937 gen (rd()); 
+        std::uniform_int_distribution <int> valueDist (1, 100);
+        for (size_t i = 0; i < theTaskSize; ++i) {
+            myTasks.push_back (valueDist (gen));
+        }
+    }
+    
+    mySpinMutex = theSpinMutex;
+    myCurrentTask = 0;
+    myLockTime = 0;
+    myUnlockTime = 0;
+    myGeneralTime = 0;
+
+    int anErr;
+    if (theSpinMutex) {
+        anErr = pthread_mutex_init (&myMutex, nullptr);
+    } else {
+        anErr = pthread_spin_init (&mySpinlock, PTHREAD_PROCESS_PRIVATE);
+    }
+    if(anErr != 0) {
+        __ERR_EXIT__ (anErr, "Cannot initialize mutex/spin");
+    }
+
+    for (auto& aThread : aThreads) {
+        anErr = pthread_create (&aThread, nullptr, ThreadJobMutexSpin, nullptr);
+    }
+    if(anErr != 0) {
+        __ERR_EXIT__ (anErr, "Cannot create thread");
+    }
+
+    for (auto& aThread : aThreads) {
+        anErr = pthread_join (aThread, nullptr);
+    }
+
+    if (theSpinMutex) {
+        pthread_mutex_destroy (&myMutex);
+    } else {
+        pthread_spin_destroy (&mySpinlock);
+    }
+
+    theTable.setHeaders ({"Mutex/Spin", "Threads", "Number of Tasks", "Lock time", "Unlock time", "Lock/Unlock time"});
+
+    theTable.addRow({theSpinMutex ? "Mutex" : "Spin",
+                     std::to_string (theNumberOfThreads),
+                     std::to_string (theTaskSize),
+                     std::to_string (myLockTime / theTaskSize),
+                     std::to_string (myUnlockTime / theTaskSize),
+                     std::to_string ((myLockTime + myUnlockTime) / theTaskSize)});
+
+    // std::cout << "Avg. lock time: " << myLockTime / theTaskSize << " s" << std::endl;
+    // std::cout << "Avg. unlock time: " << myUnlockTime / theTaskSize << " s" << std::endl;
+    // std::cout << "Avg. lock & unlock time: " << (myLockTime + myUnlockTime) / theTaskSize << " s" << std::endl;
 }
 
 }

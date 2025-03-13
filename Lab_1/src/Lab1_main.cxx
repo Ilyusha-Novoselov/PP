@@ -19,7 +19,7 @@ void ParallelArrayProcessingTest()
         }
     }
 
-    aTable.Print();
+    aTable.PrintInTerminal();
 }
 
 void clearScreen() {
