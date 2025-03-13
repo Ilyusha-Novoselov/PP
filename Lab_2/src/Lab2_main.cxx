@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "Lab2_TaskManager.hxx"
+#include "Lab2_MapReduce.hxx"
 #include "Lab2_Table.hxx"
 
 namespace {
@@ -30,6 +31,7 @@ int main()
     std::cout << "2. Print info about thread/task without Mutex\n";
     std::cout << "3. Compare Mutex/SpinLock\n";
     std::cout << "4. Simulate Condition Var\n";
+    std::cout << "5. MapReduce\n";
     std::cout << "0. Exit\n";
     std::cout << "Enter your choice: ";
     std::cin >> aChoice;
@@ -49,6 +51,10 @@ int main()
         }
         case 4: {
             parallel::TaskManager::SimulateCondVar();
+            break;
+        }
+        case 5: {
+            parallel::MapReduce::TestMapReduce();
             break;
         }
     }
