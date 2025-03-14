@@ -4,10 +4,6 @@ project(Labs)
 
 set(CMAKE_GENERATOR_PLATFORM "x64")
 
-if(WIN32)
-	add_subdirectory(3rdparty)
-endif()
-
 set(LABS Lab_1 Lab_2)
 
 foreach(LAB ${LABS})

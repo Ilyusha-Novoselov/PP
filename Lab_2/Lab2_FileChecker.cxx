@@ -5,12 +5,9 @@
 #include <queue>
 #include <pthread.h>
 
-#include "Lab2_FileChecker.hxx"
-#include "Lab2_Table.hxx"
+#include "Table.hxx"
 
 namespace fs = std::filesystem;
-
-namespace parallel {
 
 struct Task 
 {
@@ -23,7 +20,6 @@ pthread_mutex_t myQueueMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t myQueueCond = PTHREAD_COND_INITIALIZER;
 bool myStopThreads = false;
 
-namespace {
 void* SearchInFile (void* theArg) {
     while (true) {
         pthread_mutex_lock (&myQueueMutex);
@@ -51,19 +47,17 @@ void* SearchInFile (void* theArg) {
         while (std::getline (aFile, aLine)) {
             line_number++;
             if (aLine.find (aTask.mySubString) != std::string::npos) {
-                std::cout << "Found in " << aTask.myFilePath << " at line " << line_number << "\n";
+                //std::cout << "Found in " << aTask.myFilePath << " at line " << line_number << "\n";
             }
         }
     }
     return nullptr;
 }
 
-}
-
-void FileChecker::TraverseDirectory (const std::string& thePath, const std::string& theSubstr)
+void TraverseDirectory (const std::string& thePath, const std::string& theSubstr)
 {
     for (const auto& anEntry : fs::recursive_directory_iterator (thePath)) {
-        if (anEntry.is_regular_file() && anEntry.path().extension() == ".txt") {
+        if (anEntry.is_regular_file() && anEntry.path().extension() == ".h") {
             pthread_mutex_lock (&myQueueMutex);
             myTaskQueue.push ({anEntry.path().string(), theSubstr});
             pthread_cond_signal (&myQueueCond);
@@ -72,10 +66,10 @@ void FileChecker::TraverseDirectory (const std::string& thePath, const std::stri
     }
 }
 
-void FileChecker::StartFileChecker (size_t theNumberOfThreads, 
-                                    std::string& thePath, 
-                                    std::string& theSubstr, 
-                                    Table& theTable)
+void StartFileChecker (size_t theNumberOfThreads, 
+                       std::string& thePath, 
+                       std::string& theSubstr, 
+                       Table& theTable)
 {
     auto aStart = std::chrono::steady_clock::now();
     std::vector <pthread_t> aThreads (theNumberOfThreads);
@@ -102,17 +96,14 @@ void FileChecker::StartFileChecker (size_t theNumberOfThreads,
                       std::to_string (aTime)});
 }
 
-void FileChecker::TestFileChecker()
-{
+int main() {
     Table aTable;
-    std::string aPath = "/home/ilya/Desktop/Work/PP/scripts/test_directory";
-    std::string aSubstr = "Hello";
+    std::string aPath = "/usr";
+    std::string aSubstr = "#ifdef";
     for (size_t aThreads = 1; aThreads <= 16; aThreads *= 2) {
         StartFileChecker (aThreads, aPath, aSubstr, aTable);
     }
 
     aTable.PrintInTerminal();
     aTable.PrintForWord();
-}
-
 }

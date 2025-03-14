@@ -1,14 +1,11 @@
 #include <iostream>
 #include <chrono>
+#include <vector>
+#include <functional>
 #include <pthread.h>
 
-#include "Lab2_MapReduce.hxx"
-#include "Lab2_Table.hxx"
+#include "Table.hxx"
 
-
-namespace parallel {
-
-namespace {
 struct ThreadData
 {
     std::vector <int> *myData;
@@ -43,9 +40,57 @@ void* ReduceThread (void* arg) {
     return nullptr;
 }
 
+int DoMapReduce (std::vector <int>& myData, 
+                 std::function <int (int)> myMapFunc, 
+                 std::function <int (int, int)> reduceFunc,
+                 int aNumThreads)
+{
+    size_t dataSize = myData.size();
+    std::vector <int> myMappedResults(dataSize);
+    std::vector <pthread_t> aThreads(aNumThreads);
+    std::vector <ThreadData> aThreadData(aNumThreads);
+
+    // Шаг 1: MAP (разделение работы по потокам)
+    size_t chunkSize = (dataSize + aNumThreads - 1) / aNumThreads;
+    for (int i = 0; i < aNumThreads; ++i) {
+    size_t myStart = i * chunkSize;
+    size_t myEnd = std::min(myStart + chunkSize, dataSize);
+    aThreadData[i] = { &myData, &myMappedResults, myMapFunc, myStart, myEnd };
+    pthread_create (&aThreads[i], nullptr, MapThread, &aThreadData[i]);
+    }
+    for (int i = 0; i < aNumThreads; ++i) {
+    pthread_join (aThreads[i], nullptr);
+    }
+
+    // Шаг 2: REDUCE (объединение результатов)
+    std::vector<ReduceData> aReduceData (aNumThreads);
+    std::vector<int> aReduceResults (aNumThreads);
+
+    for (int i = 0; i < aNumThreads; ++i) {
+    size_t myStart = i * chunkSize;
+    size_t myEnd = std::min(myStart + chunkSize, dataSize);
+    if (myStart < myEnd) {
+    aReduceData[i] = { &myMappedResults, reduceFunc, 0, myStart, myEnd };
+    pthread_create (&aThreads[i], nullptr, ReduceThread, &aReduceData[i]);
+    }
+    }
+    for (int i = 0; i < aNumThreads; ++i) {
+    if (aReduceData[i].myStart < aReduceData[i].myEnd) {
+    pthread_join (aThreads[i], nullptr);
+    aReduceResults[i] = aReduceData[i].myResult;
+    }
+    }
+
+    // Финальное объединение
+    int aFinalResult = aReduceResults[0];
+    for (size_t i = 1; i < aReduceResults.size(); i++) {
+    aFinalResult = reduceFunc (aFinalResult, aReduceResults[i]);
+    }
+
+    return aFinalResult;
 }
 
-void MapReduce::StartMapReduce (Table& theTable, size_t theNumOfThreads, size_t theArraySize)
+void StartMapReduce (Table& theTable, size_t theNumOfThreads, size_t theArraySize)
 {
     std::vector <int> aData;
     for (size_t i = 0; i < theArraySize; ++i) {
@@ -71,8 +116,7 @@ void MapReduce::StartMapReduce (Table& theTable, size_t theNumOfThreads, size_t 
                       std::to_string (anParallelTime)});
 }
 
-void MapReduce::TestMapReduce()
-{
+int main() {
     std::pair <int, double> aResult;
     std::array <size_t, 6> anArraySizes = {50, 100, 500, 1000, 5000, 10000};
     Table aTable;
@@ -84,56 +128,4 @@ void MapReduce::TestMapReduce()
 
     aTable.PrintInTerminal();
     aTable.PrintForWord();
-}
-
-int MapReduce::DoMapReduce (std::vector <int>& myData, 
-                            std::function <int (int)> myMapFunc, 
-                            std::function <int (int, int)> reduceFunc,
-                            int aNumThreads)
-{
-    size_t dataSize = myData.size();
-    std::vector <int> myMappedResults(dataSize);
-    std::vector <pthread_t> aThreads(aNumThreads);
-    std::vector <ThreadData> aThreadData(aNumThreads);
-
-    // Шаг 1: MAP (разделение работы по потокам)
-    size_t chunkSize = (dataSize + aNumThreads - 1) / aNumThreads;
-    for (int i = 0; i < aNumThreads; ++i) {
-        size_t myStart = i * chunkSize;
-        size_t myEnd = std::min(myStart + chunkSize, dataSize);
-        aThreadData[i] = { &myData, &myMappedResults, myMapFunc, myStart, myEnd };
-        pthread_create (&aThreads[i], nullptr, MapThread, &aThreadData[i]);
-    }
-    for (int i = 0; i < aNumThreads; ++i) {
-        pthread_join (aThreads[i], nullptr);
-    }
-
-    // Шаг 2: REDUCE (объединение результатов)
-    std::vector<ReduceData> aReduceData (aNumThreads);
-    std::vector<int> aReduceResults (aNumThreads);
-    
-    for (int i = 0; i < aNumThreads; ++i) {
-        size_t myStart = i * chunkSize;
-        size_t myEnd = std::min(myStart + chunkSize, dataSize);
-        if (myStart < myEnd) {
-            aReduceData[i] = { &myMappedResults, reduceFunc, 0, myStart, myEnd };
-            pthread_create (&aThreads[i], nullptr, ReduceThread, &aReduceData[i]);
-        }
-    }
-    for (int i = 0; i < aNumThreads; ++i) {
-        if (aReduceData[i].myStart < aReduceData[i].myEnd) {
-            pthread_join (aThreads[i], nullptr);
-            aReduceResults[i] = aReduceData[i].myResult;
-        }
-    }
-
-    // Финальное объединение
-    int aFinalResult = aReduceResults[0];
-    for (size_t i = 1; i < aReduceResults.size(); i++) {
-        aFinalResult = reduceFunc (aFinalResult, aReduceResults[i]);
-    }
-
-    return aFinalResult;
-}
-
 }

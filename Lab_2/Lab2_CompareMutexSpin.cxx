@@ -1,3 +1,4 @@
+#include <array>
 #include <iostream>
 #include <cstring>
 #include <random>
@@ -5,28 +6,19 @@
 #include <chrono>
 #include <pthread.h>
 
-#include "Lab2_TaskManager.hxx"
-#include "Lab2_Table.hxx"
+#include "Table.hxx"
 
-namespace parallel {
+#define __ERR_EXIT__(theCode, theStr) { std::cerr << theStr << ": " << strerror (theCode) << std::endl; exit (EXIT_FAILURE); }
 
 pthread_mutex_t    myMutex;
 pthread_spinlock_t mySpinlock;
 std::vector <int>  myTasks;
 size_t             myCurrentTask;
-bool               myIsEnableMutex;
 bool               mySpinMutex;
 int64_t            myLockTime = 0;
 int64_t            myUnlockTime = 0;
 int64_t            myGeneralTime = 0;
 
-enum StoreState
-{
-    EMPTY,
-    FULL
-} myState;
-
-namespace {
 void DoTask (size_t theCurrentTask, bool theIsLogging)
 {
     if (theIsLogging) {
@@ -37,89 +29,7 @@ void DoTask (size_t theCurrentTask, bool theIsLogging)
     }
 }
 
-void Wait (StoreState anExpectedState)
-{
-    int anErr;
-    while (myState != anExpectedState) {
-        anErr = pthread_mutex_unlock (&myMutex);
-        if (anErr != 0) {
-            __ERR_EXIT__ (anErr, "Cannot unlock mutex");
-        }
-
-        usleep(100);
-
-        anErr = pthread_mutex_lock(&myMutex);
-        if (anErr != 0) {
-            __ERR_EXIT__ (anErr, "Cannot lock mutex");
-        }
-    }
-}
-}
-
-void *TaskManager::ThreadJob (void* theArgs)
-{
-    int anErr = 0;
-    while (true) {
-        if (myIsEnableMutex) {
-            anErr = pthread_mutex_lock (&myMutex);
-            if (anErr != 0) {
-                __ERR_EXIT__ (anErr, "Cannot lock mutex");
-            }
-        }
-
-        size_t aCurrentTask = myCurrentTask;
-        if (!myIsEnableMutex) {
-            sleep (rand() % 3);
-        }
-        myCurrentTask++;
-        if (myIsEnableMutex) {
-            anErr = pthread_mutex_unlock (&myMutex);
-            if (anErr != 0) {
-                __ERR_EXIT__ (anErr, "Cannot unlock mutex");
-            }
-        }
-        
-
-        if (aCurrentTask < myTasks.size()) {
-            DoTask (aCurrentTask, true);
-        } else {
-            return nullptr;
-        }
-    } 
-}
-
-void TaskManager::CheckTheExample (bool theIsEnableMutex) 
-{
-    std::random_device rd; 
-    std::mt19937 gen(rd()); 
-    std::uniform_int_distribution <int> valueDist(1, 100);
-    myIsEnableMutex = theIsEnableMutex;
-
-    for (size_t i = 0; i < 10; ++i) {
-        myTasks.push_back (valueDist (gen));
-    }
-
-    myCurrentTask = 0;
-    int anErr = pthread_mutex_init (&myMutex, NULL);
-    if (anErr != 0) {
-        __ERR_EXIT__ (anErr, "Cannot initialize mutex");
-    }
-
-    pthread_t aThread1, aThread2;
-    anErr = pthread_create (&aThread1, nullptr, ThreadJob, nullptr);
-    if(anErr != 0) {
-        __ERR_EXIT__ (anErr, "Cannot create Thread1");
-    }
-    anErr = pthread_create (&aThread2, nullptr, ThreadJob, nullptr);
-    if(anErr != 0) {
-        __ERR_EXIT__ (anErr, "Cannot create Thread2");
-    }
-    pthread_join (aThread1, nullptr);
-    pthread_join (aThread2, nullptr);
-    pthread_mutex_destroy (&myMutex); 
-}
-//----------------------------------------------------------------------------------------//
-void *TaskManager::ThreadJobMutexSpin (void* theArgs)
+void *ThreadJob (void* theArgs)
 {
     int anErr;
     while (true) {
@@ -162,7 +72,7 @@ void *TaskManager::ThreadJobMutexSpin (void* theArgs)
 
 }
 
-void TaskManager::EstimatePrimitiveSynh (size_t theTaskSize, size_t theNumberOfThreads, bool theSpinMutex, Table& theTable)
+void EstimatePrimitiveSynh (size_t theTaskSize, size_t theNumberOfThreads, bool theSpinMutex, Table& theTable)
 {
     std::vector <pthread_t> aThreads (theNumberOfThreads);
     
@@ -191,7 +101,7 @@ void TaskManager::EstimatePrimitiveSynh (size_t theTaskSize, size_t theNumberOfT
     }
     auto aStart = std::chrono::steady_clock::now();
     for (auto& aThread : aThreads) {
-        anErr = pthread_create (&aThread, nullptr, ThreadJobMutexSpin, nullptr);
+        anErr = pthread_create (&aThread, nullptr, ThreadJob, nullptr);
     }
     if(anErr != 0) {
         __ERR_EXIT__ (anErr, "Cannot create thread");
@@ -219,53 +129,17 @@ void TaskManager::EstimatePrimitiveSynh (size_t theTaskSize, size_t theNumberOfT
                       std::to_string ((myLockTime + myUnlockTime) / theTaskSize),
                       std::to_string (myGeneralTime)});
 }
-//----------------------------------------------------------------------------------------//
-void *TaskManager::Producer (void* theArgs)
-{
-    while (true)
-    {
-        pthread_mutex_lock(&myMutex);
 
-        Wait (EMPTY);
-
-        myState = FULL;
-        std::cout << "Producing...Done" << std::endl;
-        usleep (500000);
-
-        pthread_mutex_unlock(&myMutex);
+int main() {
+    std::array <size_t, 6> aTaskSizes = {50, 100, 500, 1000, 5000, 10000};
+    Table aTable;
+    for (size_t aThreads = 1; aThreads <= 16; aThreads *= 2) {
+        for (size_t aTaskSize : aTaskSizes) {
+            EstimatePrimitiveSynh (aTaskSize, aThreads, true, aTable);
+            EstimatePrimitiveSynh (aTaskSize, aThreads, false, aTable);
+        }
     }
-}
 
-void *TaskManager::Consumer (void* theArgs)
-{
-    while (true)
-    {
-        pthread_mutex_lock(&myMutex);
-
-        Wait (FULL);
-
-        myState = EMPTY;
-        std::cout << "Consuming...Done" << std::endl;
-        usleep (500000);
-
-        pthread_mutex_unlock(&myMutex);
-    }
-}
-
-void TaskManager::SimulateCondVar()
-{
-    myState = EMPTY;
-    pthread_t aThread1, aThread2;
-    pthread_mutex_init (&myMutex, nullptr);
-
-    pthread_create (&aThread1, nullptr, Producer, nullptr);
-    pthread_create (&aThread2, nullptr, Consumer, nullptr);
-
-    pthread_join (aThread1, nullptr);
-    pthread_join (aThread2, nullptr);
-
-    pthread_mutex_destroy (&myMutex);
-}
-
-
+    aTable.PrintInTerminal();
+    aTable.PrintForWord();
 }
