@@ -113,4 +113,6 @@ int main() {
         pthread_attr_destroy (&thread_attr);
     }
     pthread_exit (NULL);
+
+    return 0;
 }

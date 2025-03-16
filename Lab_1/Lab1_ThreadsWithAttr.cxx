@@ -51,4 +51,6 @@ int main() {
     free (aStackMemory);
 
     std::cout << "Main thread finished execution" << std::endl;
+
+    return 0;
 }

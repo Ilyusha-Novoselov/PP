@@ -122,4 +122,6 @@ int main() {
     }
 
     aTable.PrintInTerminal();
+
+    return 0;
 }

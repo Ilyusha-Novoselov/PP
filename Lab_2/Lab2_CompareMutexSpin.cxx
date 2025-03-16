@@ -142,4 +142,6 @@ int main() {
 
     aTable.PrintInTerminal();
     aTable.PrintForWord();
+
+    return 0;
 }

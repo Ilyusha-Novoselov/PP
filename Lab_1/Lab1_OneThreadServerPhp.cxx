@@ -71,4 +71,6 @@ int main() {
         }
         close (client_fd);
     }
+
+    return 0;
 }

@@ -73,5 +73,7 @@ int main() {
     }
     pthread_join (aThread1, nullptr);
     pthread_join (aThread2, nullptr);
-    pthread_mutex_destroy (&myMutex); 
+    pthread_mutex_destroy (&myMutex);
+
+    return 0;
 }
