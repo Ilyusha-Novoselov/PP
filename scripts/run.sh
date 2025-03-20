@@ -48,7 +48,7 @@ select_executable() {
 clear_console
 
 echo "Выберите лабораторную работу:"
-labs=("Lab_1" "Lab_2")
+labs=("Lab_1" "Lab_2" "Lab_3")
 for i in "${!labs[@]}"; do
   echo "$((i + 1)): ${labs[$i]}"
 done
