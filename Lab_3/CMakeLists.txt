@@ -7,6 +7,12 @@ find_package(OpenMP REQUIRED)
 set(COMMON_SOURCE "${CMAKE_SOURCE_DIR}/Table/Table.cxx")
 set(COMMON_HEADER "${CMAKE_SOURCE_DIR}/Table/")
 
+add_executable("Lab3_Example19ModifiedWithoutOpenMP" "Lab3_Example19Modified.cxx" ${COMMON_SOURCE})
+target_include_directories("Lab3_Example19ModifiedWithoutOpenMP" PRIVATE ${COMMON_HEADER})
+if(OpenMP_CXX_FOUND)
+    target_compile_options("Lab3_Example19ModifiedWithoutOpenMP" PRIVATE -fno-openmp)
+endif()
+
 file(GLOB CPP_FILES "*.cxx")
 
 foreach(CPP_FILE ${CPP_FILES})
