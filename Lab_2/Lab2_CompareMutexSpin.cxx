@@ -6,7 +6,7 @@
 #include <chrono>
 #include <pthread.h>
 
-#include "Table.hxx"
+#include <Table.hxx>
 
 #define __ERR_EXIT__(theCode, theStr) { std::cerr << theStr << ": " << strerror (theCode) << std::endl; exit (EXIT_FAILURE); }
 

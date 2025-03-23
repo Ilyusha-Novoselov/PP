@@ -4,7 +4,7 @@
 #include <functional>
 #include <pthread.h>
 
-#include "Table.hxx"
+#include <Table.hxx>
 
 struct ThreadData
 {

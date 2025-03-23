@@ -4,7 +4,7 @@
 #include <chrono>
 #include <pthread.h>
 
-#include "Table.hxx"
+#include <Table.hxx>
 
 struct ThreadData {
     int* myArray;

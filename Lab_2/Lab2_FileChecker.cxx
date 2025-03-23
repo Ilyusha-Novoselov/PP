@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "Table.hxx"
+#include <Table.hxx>
 
 namespace fs = std::filesystem;
 
