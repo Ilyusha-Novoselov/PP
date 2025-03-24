@@ -6,6 +6,7 @@
 #include <chrono>
 #include <vector>
 #include <unordered_map>
+#include <limits>
 
 #include <png.hpp>
 #include <Table.hxx>
@@ -48,9 +49,9 @@ double ApplyFilter (const NameFilterMap& theFilters,
                 }
             }
 
-            r = std::min (std::max(r, 0), 255);
-            g = std::min (std::max(g, 0), 255);
-            b = std::min (std::max(b, 0), 255);
+            r = std::min (std::max (r, 0), 255);
+            g = std::min (std::max (g, 0), 255);
+            b = std::min (std::max (b, 0), 255);
 
             png::rgba_pixel pixel (r, g, b, anImage.get_pixel(x, y).alpha);
             anFilteredImage.set_pixel (x, y, pixel);
@@ -63,15 +64,16 @@ double ApplyFilter (const NameFilterMap& theFilters,
     if (theIsLogging) {
         std::string anOutputFileName = std::to_string (aWidth) + "x" + std::to_string (aHeight) + "_" + theFilterName + ".png";
         anFilteredImage.write (anOutputFileName);
-        std::cout << "Processed " << theFileName << " with " << theFilterName << " filter in " << aTime << " seconds using " << theNumOfThreads << " threads" << std::endl;
     }
-    
+
+    double aSpeedup = theNotParallelTime / aTime;
+    double anEfficiency = (theNotParallelTime / aTime) / theNumOfThreads;
     theTable.addRow ({std::to_string (theNumOfThreads),
                       std::to_string (aWidth) + "x" + std::to_string (aHeight),
                       theFilterName,
                       std::to_string (aTime),
-                      std::to_string (theNotParallelTime / aTime),
-                      std::to_string ((theNotParallelTime / aTime) / theNumOfThreads)});
+                      std::abs (aSpeedup) < std::numeric_limits <double>::min() ? "-" : std::to_string (aSpeedup),
+                      std::abs (anEfficiency) < std::numeric_limits <double>::min() ? "-" : std::to_string (anEfficiency)});
 
     return aTime;
 }
@@ -89,40 +91,38 @@ int main() {
                   {1.0 / 9., 1.0 / 9., 1.0 / 9.}}}
     };
     const std::string anImgDir = std::filesystem::current_path().string() + "/../Lab_3/img/";
-    const std::string anImages [] = {anImgDir + "360x437.png",
-                                     anImgDir + "1200x1200.png",
-                                     anImgDir + "3000x3000.png",
-                                     anImgDir + "6192x5785.png"};
+    const std::vector <std::string> anImages = {anImgDir + "360x437.png",
+                                                anImgDir + "1200x1200.png",
+                                                anImgDir + "3000x3000.png",
+                                                anImgDir + "6192x5785.png"};
 
     Table aTable;
     aTable.setHeaders({"Threads", "Image Resolution", "Filter", "Time", "Speedup", "Efficiency"});
 
     std::array <std::string, 3> aFiltersName = {"Negative", "Sharp", "Blur"};
 
-    std::vector <double> aNotParallelTime;
+    std::unordered_map <std::string, double> aNotParallelTime;
     for (const auto& anImage : anImages) {
         for (const auto& aFilterName : aFiltersName) {
-            aNotParallelTime.emplace_back (ApplyFilter (aFilters,
-                                                        1,
-                                                        anImage,
-                                                        aFilterName,
-                                                        aTable,
-                                                        false));
+            aNotParallelTime [anImage + aFilterName] = ApplyFilter (aFilters,
+                                                                    1,
+                                                                    anImage,
+                                                                    aFilterName,
+                                                                    aTable,
+                                                                    false);
         }
     }
 
-    for (size_t aThreads = 2; aThreads <= 16; aThreads *= 2) {
-        size_t anIndex = 0;
-        for (const auto& anImage : anImages) {
-            for (const auto& aFilterName : aFiltersName) {
+    for (const auto& anImage : anImages) {
+        for (const auto& aFilterName : aFiltersName) {
+            for (size_t aThreads = 2; aThreads <= 16; aThreads *= 2) {
                 ApplyFilter (aFilters,
                              aThreads,
                              anImage,
                              aFilterName,
                              aTable,
                              aThreads == 16 ? true : false,
-                             aNotParallelTime [anIndex]);
-                anIndex++;
+                             aNotParallelTime [anImage + aFilterName]);
             }
         }
     }
