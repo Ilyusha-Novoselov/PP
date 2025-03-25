@@ -20,7 +20,7 @@ Filter GenerateBlurKernel (int theSize) {
     return aKernel;
 }
 
-Filter GenerateSharpKernel(int theSize) {
+Filter GenerateSharpKernel (int theSize) {
     Filter aKernel (theSize, std::vector <double> (theSize, -1));
     int aCenter = theSize / 2;
     aKernel [aCenter][aCenter] = theSize * theSize;
@@ -85,7 +85,7 @@ double ApplyFilter (const size_t theNumOfThreads,
                         png::rgba_pixel aNeighbour = {0, 0, 0, 255};
 
                         if (xn >= 0 && yn >= 0 && xn < aWidth && yn < aHeight)
-                            aNeighbour = anImage.get_pixel(xn, yn);
+                            aNeighbour = anImage.get_pixel (xn, yn);
 
                         double aCoef = aKernel [j + anOffset][i + anOffset];
                         r += aCoef * aNeighbour.red;
@@ -141,11 +141,11 @@ int main() {
     std::unordered_map <std::string, double> aNotParallelTime;
     for (const auto& anImage : anImages) {
         for (const auto& aFilterName : aFiltersName) {
-            aNotParallelTime [anImage + aFilterName] = ApplyFilter(1,
-                                                                   anImage,
-                                                                   aFilterName,
-                                                                   aTable,
-                                                                   false);
+            aNotParallelTime [anImage + aFilterName] = ApplyFilter (1,
+                                                                    anImage,
+                                                                    aFilterName,
+                                                                    aTable,
+                                                                    false);
         }
     }
 
