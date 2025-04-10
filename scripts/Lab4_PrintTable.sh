@@ -1,6 +1,6 @@
 #!/bin/bash
 
-process_counts=(1 2 4 8)
+process_counts=(1 2 4 8 16)
 
 results_console=()
 results_word=()
@@ -9,7 +9,7 @@ base_time=""
 
 for np in "${process_counts[@]}"; do
     
-    result=$(mpirun -np "$np" ./../build/Lab_4/Lab4_PoissonEquation)
+    result=$(mpirun -np "$np" --oversubscribe ./../build/Lab_4/Lab4_PoissonEquation)
     
     iterations=$(echo "$result" | grep -oP 'Converged in \K\d+')
     time=$(echo "$result" | grep -oP 'Execution time: \K[\d.]+')

@@ -14,7 +14,7 @@ constexpr double MINX = -1.0, MINY = -1.0, MINZ = -1.0;
 constexpr double DX = 2.0, DY = 2.0, DZ = 2.0;
 
 // Параметры метода
-constexpr size_t MAX_ITER = 10000;
+constexpr size_t MAX_ITER = 15000;
 constexpr double EPS = 1e-8;
 
 // Искомая функция или граничное условие
