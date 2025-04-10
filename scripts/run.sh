@@ -20,6 +20,19 @@ cmake --build .
 
 select_executable() {
   local lab_dir="$1"
+
+if [[ "$lab_dir" == "Lab_4" ]]; then
+    script_dir=$(dirname "$(realpath "$0")")
+
+    lab4_script="$script_dir/../scripts/Lab4_PrintTable.sh"
+    
+    if [ -f "$lab4_script" ]; then
+        bash "$lab4_script"
+    else
+        echo "Скрипт анализа Lab_4 не найден: $lab4_script"
+    fi
+    return
+fi
   
   local executables=()
   for file in "$lab_dir"/*; do
@@ -48,7 +61,7 @@ select_executable() {
 clear_console
 
 echo "Выберите лабораторную работу:"
-labs=("Lab_1" "Lab_2" "Lab_3")
+labs=("Lab_1" "Lab_2" "Lab_3" "Lab_4")
 for i in "${!labs[@]}"; do
   echo "$((i + 1)): ${labs[$i]}"
 done
