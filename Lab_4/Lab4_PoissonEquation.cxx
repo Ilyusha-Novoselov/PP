@@ -97,10 +97,15 @@ int main (int argc, char** argv) {
     size_t anIterations = 0;
     double aStart = MPI_Wtime();
 
+    double anExchangeTime = 0.;
+    double aComputeTime = 0.;
+
     for (; aGlobalErr > EPS && anIterations < MAX_ITER; ++anIterations) {
+        double anExchangeStart = MPI_Wtime();
+
         MPI_Request aReqs[4];
         int reqsCount = 0;
-    
+
         // Асинхронный обмен
         if (aRank != aSize - 1) {
             for (size_t i = 0; i <= NX; ++i) {
@@ -123,6 +128,11 @@ int main (int argc, char** argv) {
             MPI_Isend (aSendDown.data(), aSendDown.size(), MPI_DOUBLE, aRank - 1, 1, MPI_COMM_WORLD, &aReqs[reqsCount++]);
             MPI_Irecv (aRecvDown.data(), aRecvDown.size(), MPI_DOUBLE, aRank - 1, 0, MPI_COMM_WORLD, &aReqs[reqsCount++]);
         }
+
+        double anExchangeEnd= MPI_Wtime();
+        anExchangeTime += (anExchangeEnd - anExchangeStart);
+
+        double aComputeStart = MPI_Wtime();
     
         // Вычисляем внутренние точки, НЕ зависящие от границ
         aLocalErr = 0.0;
@@ -194,6 +204,8 @@ int main (int argc, char** argv) {
                 }
             }
         }
+        double aComputeEnd = MPI_Wtime();
+        aComputeTime += (aComputeEnd - aComputeStart);
 
         // Обмен указателей (U_New -> U, U_New заполнится на следующей итерации)
         std::swap (U, U_New);
@@ -202,9 +214,25 @@ int main (int argc, char** argv) {
     }
 
     double anEnd = MPI_Wtime();
+
+    // Сбор и вывод замеров времени для каждого процесса
+    double aTimes[2] = { anExchangeTime, aComputeTime };
+    std::vector <double> anAllTimes;
+
     if (aRank == 0) {
-        std::cout << "Converged in " << anIterations << " iterations, max error = " << aGlobalErr << std::endl;
-        std::cout << "Execution time: " << (anEnd - aStart) << " seconds" << std::endl;
+        anAllTimes.resize (aSize * 2);
+    }
+
+    MPI_Gather (aTimes, 2, MPI_DOUBLE, anAllTimes.data(), 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    if (aRank == 0) {
+        std::cout << anIterations << " " << aGlobalErr << " " << (anEnd - aStart) << std::endl;
+
+        for (size_t i = 0; i < aSize; ++i) {
+            double anExchange = anAllTimes[i * 2];
+            double aCompute = anAllTimes[i * 2 + 1];
+            std::cout << i << " " << anExchange << " " << aCompute << std::endl;
+        }
     }
 
     MPI_Finalize();
